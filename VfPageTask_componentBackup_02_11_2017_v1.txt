@@ -1,0 +1,476 @@
+<apex:component access="global" Controller="EB_DisplayTimeEntryReportController" >
+    <apex:attribute name="projId" type="Id" description="Id of the Project" assignTo="{!objProjectId}"/>
+    <html>
+        <head>
+            <style type="text/css">
+                .tableStyle {
+                    border-collapse: collapse;
+                    border: 1px solid black;
+                    text-align: center;
+                    padding: 3px;
+                    width: auto;
+                    height: auto;
+                }
+                .rowStyle {
+                    background-color:rgba(1, 129, 243, 0.23);
+                }
+                .givebottomSpace {
+                    margin-bottom: 10px;
+                    margin-top: 5px;
+                    font-size: 14px;
+                    font-weight: bold;
+                }
+                table {
+                    margin: 0px auto;
+                    width: calc(100% - 5px) !important;
+                }
+            </style>
+            <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+        </head>
+
+        <body>
+            <apex:outputPanel rendered="{!If($User.UIThemeDisplayed = 'Theme3',If($User.UITheme = 'Theme3',true,false),false)}">
+                <apex:outputPanel id="table_block">
+                    <div class="givebottomSpace">
+                        <apex:outputText value="Budget Used: "/>
+                    </div>
+                    <table id="table1" class="tableStyle" style="margin: 0px auto;width: calc(100% - 5px) !important; border-collapse: collapse;
+                    border: 1px solid black;
+                    text-align: center;">
+                        <tr>
+                            <td class="tableStyle" style="border-collapse: collapse;
+                            border: 1px solid black;
+                            text-align: center;
+                            padding: 3px;
+                            width: auto;
+                            height: auto;">
+
+                            </td>
+                            <td class="tableStyle" style="border-bottom:hidden; border-collapse: collapse;
+                            text-align: center;
+                            padding: 3px;
+                            width: auto;
+                            height: auto;">
+                                <b>Estimate</b>
+                            </td>
+                            <td class="tableStyle" style="border-bottom:hidden; border-collapse: collapse;
+                            text-align: center;
+                            padding: 3px;
+                            width: auto;
+                            height: auto;">
+                                <b>Used</b>
+                            </td>
+                            <td class="tableStyle" style="border-bottom:hidden; border-collapse: collapse;
+                            text-align: center;
+                            padding: 3px;
+                            width: auto;
+                            height: auto;">
+                                <b>Remaining</b>
+                            </td>
+                            <td class="tableStyle" style="border-collapse: collapse;
+                            border: 1px solid black;
+                            text-align: center;
+                            padding: 3px;
+                            width: auto;
+                            height: auto;">
+                                <b>Week </b>
+                            </td>
+                            <td class="tableStyle" style="border-collapse: collapse;
+                            border: 1px solid black;
+                            text-align: center;
+                            padding: 3px;
+                            width: auto;
+                            height: auto;">
+                                <b>Week</b>
+                            </td>
+                            <td class="tableStyle" style="border-collapse: collapse;
+                            border: 1px solid black;
+                            text-align: center;
+                            padding: 3px;
+                            width: auto;
+                            height: auto;">
+                                <b>Week</b>
+                            </td>
+                            <td class="tableStyle" style="border-collapse: collapse;
+                            border: 1px solid black;
+                            text-align: center;
+                            padding: 3px;
+                            width: auto;
+                            height: auto;">
+                                <b>Week</b>
+                            </td>
+                        </tr>
+                        <tr >
+                            <td class="tableStyle" style="border-top:hidden; border-collapse: collapse;
+                            text-align: center;
+                            padding: 3px;
+                            width: auto;
+                            height: auto;">
+
+                            </td>
+
+                            <td class="tableStyle" style="border-top:hidden; border-collapse: collapse;
+                            text-align: center;
+                            padding: 3px;
+                            width: auto;
+                            height: auto;">
+                            <!-- <b>Estimate</b> -->
+                            </td>
+                            <td class="tableStyle" style="border-top:hidden; border-collapse: collapse;
+                            text-align: center;
+                            padding: 3px;
+                            width: auto;
+                            height: auto;">
+                            <!-- <b>Used</b> -->
+                            </td>
+                            <td class="tableStyle" style="border-top:hidden; border-collapse: collapse;
+                            text-align: center;
+                            padding: 3px;
+                            width: auto;
+                            height: auto;">
+                            <!-- <b>Remaining</b> -->
+                            </td>
+                            <!--This repeat prints the name of all the weeks -->
+                            <apex:repeat value="{!dateWeekWiseList}" var="dateWeekWiseList_obj">
+                                <td class="tableStyle" style="border-collapse: collapse;
+                                border: 1px solid black;
+                                text-align: center;
+                                padding: 3px;
+                                width: auto;
+                                height: auto;">
+                                    {!dateWeekWiseList_obj}
+                                </td>
+                            </apex:repeat>
+                        </tr>
+
+                        <tr>
+                            <!-- <td class="tableStyle">
+
+                            </td> -->
+                            <td class="tableStyle" style="border-collapse: collapse;
+                            border: 1px solid black;
+                            text-align: right;
+                            padding: 3px;
+                            width: auto;
+                            height: auto; ">
+                                <b>Total:</b>
+                            </td>
+                            <apex:repeat value="{!assetValueSumMap}" var="accNum">
+                                <td class="tableStyle" style="border-collapse: collapse;
+                                border: 1px solid black;
+                                text-align: right;
+                                padding: 3px;
+                                width: auto;
+                                height: auto;">
+                                    {!assetValueSumMap[accNum]}
+                                </td>
+                            </apex:repeat>
+                            <!-- This prints the value of sum in all the columns -->
+                            <apex:repeat value="{!mapAllTotal}" var="mapAllTotal_obj">
+                              <apex:repeat value="{!dateWeekWiseList}" var="dateWeekWiseList_obj">
+                                <apex:repeat value="{!mapAllTotal[mapAllTotal_obj][dateWeekWiseList_obj]}" var="mapAllTotal_obj2">
+                                  <td class="tableStyle" style="border-collapse: collapse;
+                                  border: 1px solid black;
+                                  text-align: right;
+                                  padding: 3px;
+                                  width: auto;
+                                  height: auto;">
+                                      {!mapAllTotal_obj2}
+                                      <!-- <span class="totalSum"></span> -->
+                                  </td>
+                                </apex:repeat>
+                              </apex:repeat>
+                            </apex:repeat>
+                        </tr>
+
+                        <apex:variable var="index" value="{!1}" />
+                        <!-- <apex:variable value="{!0.00}" var="Total" /> -->
+                        <!-- printing the table dynamically -->
+                        <apex:repeat value="{!displayWrapperList}" var="displayWrapperList_obj">
+                            <tr class="{!IF(MOD(index,2)==0,'','rowStyle')}" style="{!IF(MOD(index,2)==0,'','background-color:rgba(1, 129, 243, 0.23);')}">
+                                <apex:variable value="{!0.00}" var="Total" />
+                                    <!-- <td class="tableStyle">
+                                        {!index} -->
+                                        <apex:variable var="index" value="{!index+1}"/>
+                                    <!-- </td> -->
+                                    <td class="tableStyle" style="border-collapse: collapse;
+                                    border: 1px solid black;
+                                    text-align: left;
+                                    padding: 3px;
+                                    width: auto;
+                                    height: auto;">
+                                        {!mapOfIdVsAsset[displayWrapperList_obj.assetId].Name}
+                                    </td>
+                                    <td class="tableStyle estimate" style="border-collapse: collapse;
+                                    border: 1px solid black;
+                                    text-align: right;
+                                    padding: 3px;
+                                    width: auto;
+                                    height: auto;">
+                                        <apex:outputText value="{!IF(mapOfIdVsAsset[displayWrapperList_obj.assetId].Budget_Hours__c == NULL, '0.0', mapOfIdVsAsset[displayWrapperList_obj.assetId].Budget_Hours__c)} "/>
+                                    </td>
+                                    <td class="tableStyle used" style="border-collapse: collapse;
+                                    border: 1px solid black;
+                                    text-align: right;
+                                    padding: 3px;
+                                    width: auto;
+                                    height: auto;">
+                                        <apex:outputText value="{!IF(mapOfIdVsAsset[displayWrapperList_obj.assetId].Work_Time_Total__c == NULL, '0.0', mapOfIdVsAsset[displayWrapperList_obj.assetId].Work_Time_Total__c)} "/>
+                                    </td>
+                                    <td class="tableStyle remaining" style="border-collapse: collapse;
+                                    border: 1px solid black;
+                                    text-align: right;
+                                    padding: 3px;
+                                    width: auto;
+                                    height: auto;">
+                                        <apex:outputText value="{!IF(mapOfIdVsAsset[displayWrapperList_obj.assetId].Remaining_Hours__c == NULL, '0.0', mapOfIdVsAsset[displayWrapperList_obj.assetId].Remaining_Hours__c)} "/>
+                                    </td>
+                                    <apex:repeat value="{!dateWeekWiseList}" var="dateWeekWiseList_obj">
+                                      <apex:repeat value="{!displayWrapperList_obj.weekVsTimeEntriesSumMap[dateWeekWiseList_obj]}" var="mapObj">
+                                        <td class="tableStyle columnVal" data-week="{!dateWeekWiseList_obj}" style="border-collapse: collapse;
+                                        border: 1px solid black;
+                                        text-align: right;
+                                        padding: 3px;
+                                        width: auto;
+                                        height: auto;">
+                                            {!mapObj}
+                                            <!-- <apex:variable var="Total" value="{!Total + mapObj}"/> -->
+                                        </td>
+                                      </apex:repeat>
+                                    </apex:repeat>
+                                    <!-- <td class="tableStyle">
+                                        {!Total}
+                                    </td> -->
+                            </tr>
+                        </apex:repeat>
+                    </table>
+                </apex:outputPanel>
+            </apex:outputPanel>
+
+            <apex:outputPanel rendered="{!If($User.UIThemeDisplayed = 'Theme4d',If($User.UITheme = 'Theme4d',true,false),false)}">
+                <apex:outputPanel id="table_block2">
+                    <div class="givebottomSpace">
+                        <apex:outputText value="Budget Used: "/>
+                    </div>
+                    <table id="table1" class="tableStyle slds-table slds-table_bordered slds-table_cell-buffer" style="margin: 0px auto;width: calc(100% - 5px) !important; border-collapse: collapse;
+                    border: 1px solid black;
+                    text-align: center;">
+                        <tr>
+                            <!-- <td class="tableStyle" style="border-right:hidden;">
+
+                            </td> -->
+                            <td class="tableStyle" style="border-collapse: collapse;
+                            border: 1px solid black;
+                            text-align: center;
+                            padding: 3px;
+                            width: auto;
+                            height: auto;">
+
+                            </td>
+                            <td class="tableStyle" style="border-bottom:hidden; border-collapse: collapse;
+                            text-align: center;
+                            padding: 3px;
+                            width: auto;
+                            height: auto;">
+                                <b>Estimate</b>
+                            </td>
+                            <td class="tableStyle" style="border-bottom:hidden; border-collapse: collapse;
+                            text-align: center;
+                            padding: 3px;
+                            width: auto;
+                            height: auto;">
+                                <b>Used</b>
+                            </td>
+                            <td class="tableStyle" style="border-bottom:hidden; border-collapse: collapse;
+                            text-align: center;
+                            padding: 3px;
+                            width: auto;
+                            height: auto;">
+                                <b>Remaining</b>
+                            </td>
+                            <td class="tableStyle" style="border-collapse: collapse;
+                            border: 1px solid black;
+                            text-align: center;
+                            padding: 3px;
+                            width: auto;
+                            height: auto;">
+                                <b>Week </b>
+                            </td>
+                            <td class="tableStyle" style="border-collapse: collapse;
+                            border: 1px solid black;
+                            text-align: center;
+                            padding: 3px;
+                            width: auto;
+                            height: auto;">
+                                <b>Week</b>
+                            </td>
+                            <td class="tableStyle" style="border-collapse: collapse;
+                            border: 1px solid black;
+                            text-align: center;
+                            padding: 3px;
+                            width: auto;
+                            height: auto;">
+                                <b>Week</b>
+                            </td>
+                            <td class="tableStyle" style="border-collapse: collapse;
+                            border: 1px solid black;
+                            text-align: center;
+                            padding: 3px;
+                            width: auto;
+                            height: auto;">
+                                <b>Week</b>
+                            </td>
+                        </tr>
+                        <tr >
+                            <!-- <td class="tableStyle" style="border-top:hidden; border-right:hidden;">
+
+                            </td> -->
+                            <td class="tableStyle" style="border-top:hidden; border-collapse: collapse;
+                            text-align: center;
+                            padding: 3px;
+                            width: auto;
+                            height: auto;">
+
+                            </td>
+
+                            <td class="tableStyle" style="border-top:hidden; border-collapse: collapse;
+                            text-align: center;
+                            padding: 3px;
+                            width: auto;
+                            height: auto;">
+                            <!-- <b>Estimate</b> -->
+                            </td>
+                            <td class="tableStyle" style="border-top:hidden; border-collapse: collapse;
+                            text-align: center;
+                            padding: 3px;
+                            width: auto;
+                            height: auto;">
+                            <!-- <b>Used</b> -->
+                            </td>
+                            <td class="tableStyle" style="border-top:hidden; border-collapse: collapse;
+                            text-align: center;
+                            padding: 3px;
+                            width: auto;
+                            height: auto;">
+                            <!-- <b>Remaining</b> -->
+                            </td>
+                            <!--This repeat prints the name of all the weeks -->
+                            <apex:repeat value="{!dateWeekWiseList}" var="dateWeekWiseList_obj">
+                                <td class="tableStyle" style="border-collapse: collapse;
+                                border: 1px solid black;
+                                text-align: center;
+                                padding: 3px;
+                                width: auto;
+                                height: auto;">
+                                    {!dateWeekWiseList_obj}
+                                </td>
+                            </apex:repeat>
+                        </tr>
+
+                        <tr>
+                            <!-- <td class="tableStyle">
+
+                            </td> -->
+                            <td class="tableStyle" style="border-collapse: collapse;
+                            border: 1px solid black;
+                            text-align: right;
+                            padding: 3px;
+                            width: auto;
+                            height: auto;">
+                                <b>Total:</b>
+                            </td>
+                            <apex:repeat value="{!assetValueSumMap}" var="accNum">
+                                <td class="tableStyle" style="border-collapse: collapse;
+                                border: 1px solid black;
+                                text-align: right;
+                                padding: 3px;
+                                width: auto;
+                                height: auto;">
+                                    {!assetValueSumMap[accNum]}
+                                </td>
+                            </apex:repeat>
+                            <!-- This prints the value of sum in all the columns -->
+                            <apex:repeat value="{!mapAllTotal}" var="mapAllTotal_obj">
+                              <apex:repeat value="{!dateWeekWiseList}" var="dateWeekWiseList_obj">
+                                <apex:repeat value="{!mapAllTotal[mapAllTotal_obj][dateWeekWiseList_obj]}" var="mapAllTotal_obj2">
+                                  <td class="tableStyle" style="border-collapse: collapse;
+                                  border: 1px solid black;
+                                  text-align: right;
+                                  padding: 3px;
+                                  width: auto;
+                                  height: auto;">
+                                      {!mapAllTotal_obj2}
+                                      <!-- <span class="totalSum"></span> -->
+                                  </td>
+                                </apex:repeat>
+                              </apex:repeat>
+                            </apex:repeat>
+                        </tr>
+
+                        <apex:variable var="index" value="{!1}" />
+                        <!-- <apex:variable value="{!0.00}" var="Total" /> -->
+                        <!-- printing the table dynamically -->
+                        <apex:repeat value="{!displayWrapperList}" var="displayWrapperList_obj">
+                            <tr class="{!IF(MOD(index,2)==0,'','rowStyle')}" style="{!IF(MOD(index,2)==0,'','background-color:rgba(1, 129, 243, 0.23);')}">
+                                <apex:variable value="{!0.00}" var="Total" />
+                                    <!-- <td class="tableStyle">
+                                        {!index} -->
+                                        <apex:variable var="index" value="{!index+1}"/>
+                                    <!-- </td> -->
+                                    <td class="tableStyle" style="border-collapse: collapse;
+                                    border: 1px solid black;
+                                    text-align: left;
+                                    padding: 3px;
+                                    width: auto;
+                                    height: auto;">
+                                        {!mapOfIdVsAsset[displayWrapperList_obj.assetId].Name}
+                                    </td>
+                                    <td class="tableStyle estimate" style="border-collapse: collapse;
+                                    border: 1px solid black;
+                                    text-align: right;
+                                    padding: 3px;
+                                    width: auto;
+                                    height: auto;">
+                                        <apex:outputText value="{!IF(mapOfIdVsAsset[displayWrapperList_obj.assetId].Budget_Hours__c == NULL, '0.0', mapOfIdVsAsset[displayWrapperList_obj.assetId].Budget_Hours__c)} "/>
+                                    </td>
+                                    <td class="tableStyle used" style="border-collapse: collapse;
+                                    border: 1px solid black;
+                                    text-align: right;
+                                    padding: 3px;
+                                    width: auto;
+                                    height: auto;">
+                                        <apex:outputText value="{!IF(mapOfIdVsAsset[displayWrapperList_obj.assetId].Work_Time_Total__c == NULL, '0.0', mapOfIdVsAsset[displayWrapperList_obj.assetId].Work_Time_Total__c)} "/>
+                                    </td>
+                                    <td class="tableStyle remaining" style="border-collapse: collapse;
+                                    border: 1px solid black;
+                                    text-align: right;
+                                    padding: 3px;
+                                    width: auto;
+                                    height: auto;">
+                                        <apex:outputText value="{!IF(mapOfIdVsAsset[displayWrapperList_obj.assetId].Remaining_Hours__c == NULL, '0.0', mapOfIdVsAsset[displayWrapperList_obj.assetId].Remaining_Hours__c)} "/>
+                                    </td>
+                                    <apex:repeat value="{!dateWeekWiseList}" var="dateWeekWiseList_obj">
+                                      <apex:repeat value="{!displayWrapperList_obj.weekVsTimeEntriesSumMap[dateWeekWiseList_obj]}" var="mapObj">
+                                        <td class="tableStyle columnVal" data-week="{!dateWeekWiseList_obj}" style="border-collapse: collapse;
+                                        border: 1px solid black;
+                                        text-align: right;
+                                        padding: 3px;
+                                        width: auto;
+                                        height: auto;">
+                                            {!mapObj}
+                                            <!-- <apex:variable var="Total" value="{!Total + mapObj}"/> -->
+                                        </td>
+                                      </apex:repeat>
+                                    </apex:repeat>
+                                    <!-- <td class="tableStyle">
+                                        {!Total}
+                                    </td> -->
+                            </tr>
+                        </apex:repeat>
+                    </table>
+                </apex:outputPanel>
+            </apex:outputPanel>
+        </body>
+    </html>
+
+</apex:component>

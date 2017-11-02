@@ -1,0 +1,171 @@
+/**
+*  ================================================================================================
+*    Version        Date            Author      Comment
+*  ================================================================================================
+*     Initial     Oct-26-2017      Amruta K    Controller class for ProjectPlanPage
+*
+*/
+
+public with sharing class EB_ProjectPlanPageController {
+
+    public Map<Id,Asset> mapOfIdVsAsset {get;set;}
+    public Map<Id, Map<String, String>> assetWithTimeEntryTimeMap {get; set;}
+    public List<DisplayWrapper> displayWrapperList {get; set;}
+    public Map<Id,Time_Entry__c> mapOfIdVsTimeEntry;
+    public List<String> dateWeekWiseList {get; set;}
+    public Map<String,Map<String, String>> mapAllTotal {get; set;}
+    public Map<String, Decimal> assetValueSumMap {get; set;}
+    public List<String> weekName {get; set;}
+    //setter for setting the object Id That is coming as atrribute
+    public Id objProjectId{get; set{
+            objProjectId = value;
+            initializeAll(); // calling this function after setting Project Id to call all the methods
+        }
+    }
+    
+    public EB_ProjectPlanPageController() {
+        dateWeekWiseList = new List<String>();
+    }
+    
+    //Method to initialize the data.
+    public void initializeAll(){
+        Map<Id,Asset> mapOfIdVsAsset = populatelstAssets(objProjectId);
+        assetWithTimeEntryTimeMap = new Map<Id, Map<String, String>>();
+        displayWrapperList = new List<DisplayWrapper>();
+        mapAllTotal = new Map<String, Map<String, String>>();
+        assetValueSumMap = new Map<String, Decimal>();
+        timeEntriesCal(mapOfIdVsAsset);
+    }
+    
+    //This method populates the assets related to the particular object
+    public Map<Id,Asset> populatelstAssets(Id objProjectId){
+        //Creating the map of Id vs Asset
+        mapOfIdVsAsset =new Map<Id,Asset>([
+            SELECT Id, 
+                    Name, 
+                    Project_New__c, 
+                    Remaining_Hours__c, 
+                    Budget_Hours__c, 
+                    Work_Time_Total__c, 
+                    Forecasted_Start_Date__c, 
+                    Forecasted_Complete_Date__c
+                FROM Asset
+                WHERE Project_New__c =: objProjectId
+                ORDER BY Name
+        ]);
+        return mapOfIdVsAsset;
+    }
+
+    //This method calculates all the dates which we need for several weeks and store it in a date list.
+    public List<Date> dateListCalculate(){
+        List<Date> startDateEndDateList = new List<Date>();
+        Integer numberOfDays = 49;
+        for(Integer i=0; i<= numberOfDays;){
+            Date checkDateOBj = System.today() + i;
+            Date weekStart = checkDateOBj.toStartofWeek();
+            Date weekEnd = weekStart + 6;
+            i=i+7;
+            startDateEndDateList.add(weekStart);
+            startDateEndDateList.add(weekEnd);
+        }
+        return startDateEndDateList;
+    }
+    /**This function searches all the time-entries related to each asset and calculates the sum of those entries and creates a list of wrapper to be displayed**/
+    
+    public void timeEntriesCal(Map<Id,Asset> mapOfIdVsAsset){
+        //Check is there is no assets related to project
+        if(mapOfIdVsAsset.size() == 0){
+            displayWrapperList.add(new DisplayWrapper(null, null ,new Map<String, String>()));
+            return;
+        }
+        
+        // calling the dateListCalculate function from here
+        List<Date> startDateEndDateList = new List<Date>();
+        startDateEndDateList = dateListCalculate();
+        weekName = new List<String>();
+        Map<String, String> dateVsTimeMap = new Map<String, String>();
+        dateWeekWiseList = new List<String>();
+        
+        /**Iterating over the list of dates to create week name and storing them in a list to be iterated on page
+        Also generating the map of Week Name Vs Work Time's Initial value**/
+        
+        for(Integer i = 0; i < startDateEndDateList.size();) {
+            String keyStr = startDateEndDateList[i].month() + '/' + startDateEndDateList[i].day();
+            // keyStr += startDateEndDateList[i + 1].month() + '/' + startDateEndDateList[i + 1].day();
+            dateVsTimeMap.put(keyStr, ' ');
+            dateWeekWiseList.add(keyStr);
+            weekName.add('Week');
+            i=i+2;
+        }
+        
+        //map of estimate, used and remaining hours from asset
+        assetValueSumMap.put('1Budget_Hours__c', 0.0);
+        assetValueSumMap.put('2Work_Time_Total__c', 0.0);
+        assetValueSumMap.put('3Remaining_Hours__c', 0.0);
+
+        for(Id assetId : mapOfIdVsAsset.keySet()) {
+            Decimal sumBudgetHours = assetValueSumMap.get('1Budget_Hours__c');
+            Decimal sumWorkTimeTotal = assetValueSumMap.get('2Work_Time_Total__c');
+            Decimal sumRemainingHours = assetValueSumMap.get('3Remaining_Hours__c');
+            Asset assetObj = mapOfIdVsAsset.get(assetId);
+            if(assetObj.Budget_Hours__c != null){
+                sumBudgetHours += assetObj.Budget_Hours__c;
+            }
+            if(assetObj.Work_Time_Total__c != null){
+                sumWorkTimeTotal += assetObj.Work_Time_Total__c;
+            }
+            if(assetObj.Remaining_Hours__c != null){
+                sumRemainingHours += assetObj.Remaining_Hours__c;
+            }
+            //map for sum of all the work time according to each week
+            mapAllTotal.put('Total', dateVsTimeMap);
+            
+            //map of estimate, used and remaining hours from asset
+            assetValueSumMap.put('1Budget_Hours__c',sumBudgetHours);
+            assetValueSumMap.put('2Work_Time_Total__c',sumWorkTimeTotal);
+            assetValueSumMap.put('3Remaining_Hours__c',sumRemainingHours);
+            
+            //New instance is need Else the issue of already output is there
+            assetWithTimeEntryTimeMap.put(assetId, new Map<String,String>(dateVsTimeMap));
+        }
+        
+        //fetches the time entry and calculates week wise total
+        for(Id assetId : mapOfIdVsAsset.keySet()) {
+            Asset assetObj = mapOfIdVsAsset.get(assetId);
+            for(Integer i=0; i<startDateEndDateList.size();){
+                
+                if((assetObj.Forecasted_Start_Date__c < startDateEndDateList[i] &&  
+                    assetObj.Forecasted_Complete_Date__c > startDateEndDateList[i+1]) || 
+                    (startDateEndDateList[i] <= assetObj.Forecasted_Start_Date__c 
+                    && startDateEndDateList[i+1] >= assetObj.Forecasted_Start_Date__c) || 
+                    (startDateEndDateList[i] <= assetObj.Forecasted_Complete_Date__c 
+                    && startDateEndDateList[i+1] >= assetObj.Forecasted_Complete_Date__c)) {
+                    
+                        String keyStr = startDateEndDateList[i].month() + '/' + startDateEndDateList[i].day();
+                        // keyStr += startDateEndDateList[i+1].month() + '/' + startDateEndDateList[i+1].day();
+                        String putBlackInString = 'BLACK';
+                        assetWithTimeEntryTimeMap.get(assetId).put(keyStr, putBlackInString);
+                        mapAllTotal.get('Total').put(keyStr,putBlackInString);
+                }
+                i = i + 2;
+            }
+        }
+        
+        //Creating the wrapper list to be displayed on page
+        for(Id assetId : assetWithTimeEntryTimeMap.keySet()) {
+            displayWrapperList.add(new DisplayWrapper(mapOfIdVsAsset.get(assetId).Name, assetId, assetWithTimeEntryTimeMap.get(assetId)));
+        }
+    }
+    
+    //Wrapper to be displayed on page
+    public class DisplayWrapper {
+        public String assetName {get; set;}
+        public Id assetId {get; set;}
+        public Map<String, String> weekVsTimeEntriesSumMap {get; set;}
+        public DisplayWrapper(String assetName, Id assetId, Map<String, String> weekVsTimeEntriesSumMap) {
+            this.assetName = assetName;
+            this.assetId = assetId;
+            this.weekVsTimeEntriesSumMap = weekVsTimeEntriesSumMap;
+        }
+    }
+}
